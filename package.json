@@ -1,0 +1,22 @@
+{
+  "name": "po-cycle-chatbot",
+  "version": "0.1.0",
+  "description": "SAP MM Procure-to-Pay chatbot backed by one Excel workbook",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "seed": "node scripts/seedWorkbook.js",
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "zod": "^3.24.1"
+  }
+}

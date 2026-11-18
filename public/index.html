@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PO Cycle Assistant — SAP Fiori</title>
+  <style>
+    :root {
+      /* SAP Fiori Horizon (Quartz Light) tokens */
+      --sapBrand: #0070f2;
+      --sapBrandHover: #0064d9;
+      --sapBrandPressed: #0057bf;
+      --sapShellBg: #1d2d3e;
+      --sapShellText: #ffffff;
+      --sapBackground: #f5f6f7;
+      --sapTileBg: #ffffff;
+      --sapText: #1d2d3e;
+      --sapTextSecondary: #556b82;
+      --sapBorder: #d9d9d9;
+      --sapBorderStrong: #a8b3bd;
+      --sapHover: #eaecee;
+      --sapSelected: #ebf8ff;
+      --sapSelectedBorder: #0070f2;
+      --sapSuccess: #30914c;
+      --sapError: #e76500;
+      --sapErrorBg: #fff5e0;
+      --sapInfoBg: #ebf8ff;
+      --sapLink: #0064d9;
+      --sapShadow: 0 0 0 1px rgba(34, 54, 73, .08), 0 2px 8px rgba(34, 54, 73, .12);
+      --sapRadius: .5rem;
+      --sapFont: "72", "72full", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --sapMono: "72 Mono", "Consolas", "Segoe UI Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--sapFont);
+      color: var(--sapText);
+      background: var(--sapBackground);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ----- Shell Bar ----- */
+    .shell-bar {
+      height: 3rem;
+      background: var(--sapShellBg);
+      color: var(--sapShellText);
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      gap: .75rem;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .16);
+      z-index: 10;
+    }
+    .shell-logo {
+      width: 2rem;
+      height: 2rem;
+      border-radius: .25rem;
+      background: linear-gradient(135deg, #0070f2, #5b9dff);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: .7rem;
+      letter-spacing: .02em;
+    }
+    .shell-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .shell-sub {
+      margin-left: auto;
+      font-size: .75rem;
+      opacity: .75;
+    }
+
+    /* ----- Page ----- */
+    .page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 72rem;
+      width: 100%;
+      margin: 0 auto;
+      min-height: 0;
+      padding: 1rem 1rem 0;
+    }
+
+    .object-header {
+      background: var(--sapTileBg);
+      border: 1px solid var(--sapBorder);
+      border-radius: var(--sapRadius);
+      box-shadow: var(--sapShadow);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .object-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--sapText);
+    }
+    .object-header p {
+      margin: .35rem 0 0;
+      color: var(--sapTextSecondary);
+      font-size: .875rem;
+    }
+
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 17rem 1fr;
+      gap: 1rem;
+      min-height: 0;
+      padding-bottom: 1rem;
+    }
+
+    @media (max-width: 800px) {
+      .workspace { grid-template-columns: 1fr; }
+      .shell-sub { display: none; }
+    }
+
+    /* ----- Side panel / tiles ----- */
+    .side-panel {
+      background: var(--sapTileBg);
+      border: 1px solid var(--sapBorder);
+      border-radius: var(--sapRadius);
+      box-shadow: var(--sapShadow);
+      padding: .75rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      overflow: auto;
+    }
+    .panel-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--sapTextSecondary);
+      margin: 0 .25rem;
+    }
+
+    .tile-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .5rem;
+    }
+    .fiori-tile {
+      appearance: none;
+      border: 1px solid var(--sapBorder);
+      background: var(--sapTileBg);
+      border-radius: var(--sapRadius);
+      padding: .7rem .75rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      color: var(--sapText);
+      font-family: inherit;
+      font-size: .875rem;
+      font-weight: 600;
+      transition: background .12s, border-color .12s, box-shadow .12s;
+    }
+    .fiori-tile:hover {
+      background: var(--sapHover);
+      border-color: var(--sapBorderStrong);
+    }
+    .fiori-tile.active {
+      background: var(--sapSelected);
+      border-color: var(--sapSelectedBorder);
+      box-shadow: inset 3px 0 0 var(--sapBrand);
+    }
+    .tile-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: .375rem;
+      background: #e8f3ff;
+      color: var(--sapBrand);
+      display: grid;
+      place-items: center;
+      font-size: .7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .fiori-tile.active .tile-icon {
+      background: var(--sapBrand);
+      color: #fff;
+    }
+    .tile-meta {
+      display: flex;
+      flex-direction: column;
+      gap: .1rem;
+      min-width: 0;
+    }
+    .tile-meta small {
+      font-weight: 400;
+      color: var(--sapTextSecondary);
+      font-size: .7rem;
+    }
+
+    #subMenu {
+      display: none;
+      flex-direction: column;
+      gap: .4rem;
+      padding-top: .25rem;
+      border-top: 1px solid var(--sapBorder);
+    }
+    #subMenu.visible { display: flex; }
+
+    .fiori-btn {
+      appearance: none;
+      font-family: inherit;
+      font-size: .8125rem;
+      font-weight: 600;
+      border-radius: var(--sapRadius);
+      padding: .45rem .75rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background .12s, border-color .12s;
+    }
+    .fiori-btn.ghost {
+      background: transparent;
+      border-color: var(--sapBorderStrong);
+      color: var(--sapText);
+    }
+    .fiori-btn.ghost:hover { background: var(--sapHover); }
+    .fiori-btn.ghost.active {
+      background: var(--sapSelected);
+      border-color: var(--sapBrand);
+      color: var(--sapBrand);
+    }
+    .fiori-btn.emphasized {
+      background: var(--sapBrand);
+      color: #fff;
+      border-color: var(--sapBrand);
+    }
+    .fiori-btn.emphasized:hover { background: var(--sapBrandHover); }
+    .fiori-btn.emphasized:disabled {
+      opacity: .45;
+      cursor: wait;
+    }
+
+    /* ----- Chat card ----- */
+    .chat-card {
+      background: var(--sapTileBg);
+      border: 1px solid var(--sapBorder);
+      border-radius: var(--sapRadius);
+      box-shadow: var(--sapShadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .chat-toolbar {
+      padding: .65rem 1rem;
+      border-bottom: 1px solid var(--sapBorder);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: #fafbfc;
+    }
+    .chat-toolbar h3 {
+      margin: 0;
+      font-size: .9375rem;
+      font-weight: 700;
+    }
+    .badge {
+      font-size: .65rem;
+      font-weight: 700;
+      padding: .15rem .4rem;
+      border-radius: 1rem;
+      background: #e8f3ff;
+      color: var(--sapBrand);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    #log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      background: #fafbfc;
+    }
+
+    .bubble {
+      max-width: 92%;
+      padding: .75rem .9rem;
+      border-radius: var(--sapRadius);
+      line-height: 1.45;
+      font-size: .875rem;
+      box-shadow: 0 1px 2px rgba(29, 45, 62, .06);
+    }
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--sapBrand);
+      color: #fff;
+      white-space: pre-wrap;
+    }
+    .bubble.bot {
+      align-self: flex-start;
+      background: #fff;
+      border: 1px solid var(--sapBorder);
+      color: var(--sapText);
+      max-width: 100%;
+    }
+    .bubble.bot .text {
+      white-space: pre-wrap;
+      font-family: var(--sapMono);
+      font-size: .8125rem;
+    }
+    .bubble.error {
+      border-color: var(--sapError);
+      background: var(--sapErrorBg);
+      color: #5b2d00;
+    }
+
+    .table-caption {
+      margin: 0 0 .35rem;
+      color: var(--sapTextSecondary);
+      font-size: .75rem;
+    }
+    .table-title {
+      margin: 0 0 .4rem;
+      font-size: .8125rem;
+      font-weight: 700;
+      color: var(--sapBrand);
+    }
+    .table-wrap {
+      margin-top: .5rem;
+      overflow-x: auto;
+      border: 1px solid var(--sapBorder);
+      border-radius: .375rem;
+      background: #fff;
+    }
+    table.chat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .75rem;
+      font-family: var(--sapMono);
+      min-width: 420px;
+    }
+    table.chat-table th,
+    table.chat-table td {
+      padding: .45rem .55rem;
+      text-align: left;
+      border-bottom: 1px solid var(--sapBorder);
+      white-space: nowrap;
+    }
+    table.chat-table th {
+      background: #eff1f2;
+      color: var(--sapTextSecondary);
+      font-weight: 700;
+      font-family: var(--sapFont);
+      position: sticky;
+      top: 0;
+    }
+    table.chat-table tbody tr:nth-child(even) { background: #fafbfc; }
+    table.chat-table tbody tr:hover { background: var(--sapSelected); }
+    table.chat-table tbody tr:last-child td { border-bottom: 0; }
+
+    .composer {
+      display: flex;
+      gap: .5rem;
+      padding: .75rem;
+      border-top: 1px solid var(--sapBorder);
+      background: #fff;
+    }
+    .composer input {
+      flex: 1;
+      border: 1px solid var(--sapBorderStrong);
+      background: #fff;
+      color: var(--sapText);
+      border-radius: var(--sapRadius);
+      padding: .6rem .75rem;
+      font: inherit;
+      font-size: .875rem;
+      outline: none;
+    }
+    .composer input:focus {
+      border-color: var(--sapBrand);
+      box-shadow: 0 0 0 2px rgba(0, 112, 242, .2);
+    }
+
+    .role-badge {
+      margin-left: .5rem;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: .2rem .55rem;
+      border-radius: 1rem;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .role-badge.manager { background: #30914c; border-color: #30914c; }
+    .role-badge.associate { background: #0070f2; border-color: #0070f2; }
+
+    .fiori-btn.ghost:disabled,
+    .fiori-btn.ghost.role-locked {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    /* Role login — shown on every fresh page load / refresh */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(29, 45, 62, .55);
+      display: grid;
+      place-items: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .login-overlay.hidden { display: none; }
+    .login-card {
+      width: min(28rem, 100%);
+      background: #fff;
+      border-radius: var(--sapRadius);
+      box-shadow: var(--sapShadow);
+      border: 1px solid var(--sapBorder);
+      overflow: hidden;
+    }
+    .login-card header {
+      background: var(--sapShellBg);
+      color: #fff;
+      padding: 1rem 1.25rem;
+    }
+    .login-card header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .login-card header p {
+      margin: .35rem 0 0;
+      opacity: .8;
+      font-size: .8rem;
+    }
+    .login-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+    .role-option {
+      appearance: none;
+      text-align: left;
+      border: 1px solid var(--sapBorder);
+      background: #fff;
+      border-radius: var(--sapRadius);
+      padding: .9rem 1rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .role-option:hover {
+      border-color: var(--sapBrand);
+      background: var(--sapSelected);
+    }
+    .role-option strong {
+      display: block;
+      font-size: .95rem;
+      color: var(--sapText);
+      margin-bottom: .25rem;
+    }
+    .role-option span {
+      font-size: .78rem;
+      color: var(--sapTextSecondary);
+      line-height: 1.35;
+    }
+    .app-shell.locked {
+      pointer-events: none;
+      filter: grayscale(.15);
+      opacity: .7;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginOverlay" class="login-overlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <header>
+        <h2 id="loginTitle">Select your role</h2>
+        <p>Required at start and after each page refresh</p>
+      </header>
+      <div class="login-body">
+        <button type="button" class="role-option" data-role="Associate">
+          <strong>Associate</strong>
+          <span>Read and update existing data only. Cannot create new Article, Site, Vendor, PO, or ASN.</span>
+        </button>
+        <button type="button" class="role-option" data-role="Manager">
+          <strong>Manager</strong>
+          <span>Full access — create, read, and update all masters and transactional data.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="appShell" class="app-shell locked">
+  <header class="shell-bar">
+    <div class="shell-logo" aria-hidden="true">PO</div>
+    <h1 class="shell-title">PO Cycle Assistant</h1>
+    <span id="roleBadge" class="role-badge" hidden></span>
+    <span class="shell-sub">SAP Fiori · Procure-to-Pay</span>
+  </header>
+
+  <main class="page">
+    <div class="object-header">
+      <h2>Purchase Order Cycle</h2>
+      <p>Maintain Article, Site, Vendor masters and run PO / ASN / GR against Excel — Fiori-style single window.</p>
+    </div>
+
+    <div class="workspace">
+      <aside class="side-panel">
+        <p class="panel-title">Business objects</p>
+        <div class="tile-grid" id="mainMenu">
+          <button type="button" class="fiori-tile" data-area="Article">
+            <span class="tile-icon">ART</span>
+            <span class="tile-meta">Article<small>Material master</small></span>
+          </button>
+          <button type="button" class="fiori-tile" data-area="Site">
+            <span class="tile-icon">SIT</span>
+            <span class="tile-meta">Site<small>Plant / DC</small></span>
+          </button>
+          <button type="button" class="fiori-tile" data-area="Vendor">
+            <span class="tile-icon">VEN</span>
+            <span class="tile-meta">Vendor<small>Supplier master</small></span>
+          </button>
+          <button type="button" class="fiori-tile" data-area="PO">
+            <span class="tile-icon">PO</span>
+            <span class="tile-meta">PO<small>Purchase order</small></span>
+          </button>
+          <button type="button" class="fiori-tile" data-area="ASN">
+            <span class="tile-icon">ASN</span>
+            <span class="tile-meta">ASN<small>Advance shipping</small></span>
+          </button>
+        </div>
+
+        <div id="subMenu">
+          <p class="panel-title">Actions</p>
+          <button type="button" class="fiori-btn ghost sub" data-action="Show">Show</button>
+          <button type="button" class="fiori-btn ghost sub" data-action="Create" id="createActionBtn">Create</button>
+          <button type="button" class="fiori-btn ghost sub" data-action="Update">Update</button>
+          <p id="createHint" class="panel-title" style="display:none;text-transform:none;font-weight:500;line-height:1.3;">Associates cannot create. Choose Manager after refresh for create access.</p>
+        </div>
+      </aside>
+
+      <section class="chat-card">
+        <div class="chat-toolbar">
+          <h3>Conversation</h3>
+          <span class="badge">Live</span>
+        </div>
+        <div id="log"></div>
+        <form class="composer" id="form">
+          <input id="input" autocomplete="off" placeholder="Enter a message or use tiles…" />
+          <button type="submit" class="fiori-btn emphasized" id="sendBtn">Send</button>
+        </form>
+      </section>
+    </div>
+  </main>
+  </div>
+
+  <script>
+    const log = document.getElementById('log');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const btn = document.getElementById('sendBtn');
+    const mainMenu = document.getElementById('mainMenu');
+    const subMenu = document.getElementById('subMenu');
+    const loginOverlay = document.getElementById('loginOverlay');
+    const appShell = document.getElementById('appShell');
+    const roleBadge = document.getElementById('roleBadge');
+    const createActionBtn = document.getElementById('createActionBtn');
+    const createHint = document.getElementById('createHint');
+    let chatState = { wizard: null, slots: {}, awaitingField: null };
+    let selectedArea = null;
+    // In-memory only → cleared on refresh, so role is asked again
+    let currentRole = null;
+
+    const COMMANDS = {
+      Article: {
+        Show: 'list articles',
+        Create: 'create article',
+        Update: 'update article',
+      },
+      Site: {
+        Show: 'list sites',
+        Create: 'create site',
+        Update: 'update site',
+      },
+      Vendor: {
+        Show: 'list vendors',
+        Create: 'create vendor',
+        Update: 'update vendor',
+      },
+      PO: {
+        Show: 'list PO',
+        Create: 'create PO',
+        Update: 'update PO',
+      },
+      ASN: {
+        Show: 'list PO',
+        Create: 'create ASN',
+        Update: 'update ASN',
+      },
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function renderTable(table) {
+      if (!table?.columns?.length || !table?.rows?.length) return '';
+      const head = table.columns
+        .map((c) => `<th>${escapeHtml(c.label || c.key)}</th>`)
+        .join('');
+      const body = table.rows
+        .map((row) => {
+          const cells = table.columns
+            .map((c) => `<td>${escapeHtml(row[c.key])}</td>`)
+            .join('');
+          return `<tr>${cells}</tr>`;
+        })
+        .join('');
+
+      return `
+        <div class="table-block">
+          ${table.caption ? `<p class="table-caption">${escapeHtml(table.caption)}</p>` : ''}
+          ${table.title ? `<p class="table-title">${escapeHtml(table.title)}</p>` : ''}
+          <div class="table-wrap">
+            <table class="chat-table">
+              <thead><tr>${head}</tr></thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function addBubble(payload, who, isError) {
+      const el = document.createElement('div');
+      el.className = `bubble ${who}` + (isError ? ' error' : '');
+
+      if (who === 'user' || typeof payload === 'string') {
+        el.textContent = typeof payload === 'string' ? payload : payload.reply || '';
+      } else {
+        const hasTable = Boolean(payload.table?.rows?.length);
+        const isWizard = Boolean(payload.wizard || payload.needsSlots || payload.needsConfirm);
+        const text = hasTable && !isWizard
+          ? (payload.reply?.split('\n')[0] || payload.table.title || '')
+          : (payload.reply || '');
+        el.innerHTML = `
+          ${text ? `<div class="text">${escapeHtml(text)}</div>` : ''}
+          ${hasTable ? renderTable(payload.table) : ''}
+        `;
+      }
+
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function updatePlaceholder() {
+      if (chatState.wizard && chatState.awaitingField) {
+        const hints = {
+          VendorCode: 'e.g. V1001',
+          SiteCode: 'e.g. S100',
+          ArticleCode: 'e.g. A10001',
+          Quantity: 'e.g. 100',
+          NetPrice: 'e.g. 240 or skip',
+          DeliveryDate: 'e.g. 2026-12-15',
+          PONumber: 'e.g. 4500000001',
+          ConfirmASNQty: 'e.g. 8',
+          MaterialGroup: 'e.g. shoes',
+          ArticleDesc: 'e.g. Running shoe',
+          UoM: 'e.g. EA',
+          BasePrice: 'e.g. 999',
+          Currency: 'e.g. INR',
+          VendorName: 'e.g. Acme Supplies',
+          Country: 'e.g. IN',
+          SiteName: 'e.g. Pune Hub',
+          Status: 'e.g. Active or Inactive',
+          GRQuantity: 'e.g. 8',
+        };
+        input.placeholder = hints[chatState.awaitingField] || 'Enter value…';
+      } else if (chatState.wizard && chatState.needsConfirm) {
+        input.placeholder = 'yes / no';
+      } else if (selectedArea) {
+        input.placeholder = `Choose Show / Create / Update for ${selectedArea}`;
+      } else {
+        input.placeholder = 'Select a business object, or type a message…';
+      }
+    }
+
+    function setArea(area) {
+      selectedArea = area;
+      mainMenu.querySelectorAll('[data-area]').forEach((b) => {
+        b.classList.toggle('active', b.dataset.area === area);
+      });
+      subMenu.classList.add('visible');
+      subMenu.querySelectorAll('[data-action]').forEach((b) => b.classList.remove('active'));
+      updatePlaceholder();
+      addBubble(`Selected ${area}. Choose Show, Create, or Update.`, 'bot');
+    }
+
+    function applyRoleToUi() {
+      const isAssociate = currentRole === 'Associate';
+      createActionBtn.disabled = isAssociate;
+      createActionBtn.classList.toggle('role-locked', isAssociate);
+      createHint.style.display = isAssociate ? 'block' : 'none';
+      roleBadge.hidden = !currentRole;
+      roleBadge.textContent = currentRole || '';
+      roleBadge.classList.toggle('manager', currentRole === 'Manager');
+      roleBadge.classList.toggle('associate', currentRole === 'Associate');
+    }
+
+    function loginAs(role) {
+      currentRole = role;
+      loginOverlay.classList.add('hidden');
+      appShell.classList.remove('locked');
+      applyRoleToUi();
+      addBubble(
+        `Logged in as ${role}. ` +
+          (role === 'Associate'
+            ? 'You can Show and Update data. Create is not allowed.'
+            : 'You have full Create, Read, and Update access.'),
+        'bot'
+      );
+      input.focus();
+    }
+
+    function runSubAction(action) {
+      if (!selectedArea || !currentRole) return;
+      if (action === 'Create' && currentRole === 'Associate') {
+        addBubble('Associates cannot create new data. Ask a Manager, or refresh and log in as Manager.', 'bot', true);
+        return;
+      }
+      subMenu.querySelectorAll('[data-action]').forEach((b) => {
+        b.classList.toggle('active', b.dataset.action === action);
+      });
+      const message = COMMANDS[selectedArea][action];
+      if (message) send(message);
+    }
+
+    async function send(message) {
+      if (!message.trim() || !currentRole) return;
+      addBubble(message, 'user');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/v1/chat/message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Role': currentRole,
+          },
+          body: JSON.stringify({
+            message,
+            confirm: false,
+            role: currentRole,
+            wizard: chatState.wizard,
+            awaitingField: chatState.awaitingField,
+            slots: chatState.slots || {},
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          addBubble(json.error?.message || 'Request failed', 'bot', true);
+        } else {
+          addBubble(json, 'bot');
+          if (json.wizard) {
+            chatState = {
+              wizard: json.wizard,
+              slots: json.slots || chatState.slots || {},
+              awaitingField: json.awaitingField || null,
+              needsConfirm: Boolean(json.needsConfirm),
+            };
+          } else {
+            chatState = { wizard: null, slots: {}, awaitingField: null, needsConfirm: false };
+          }
+          updatePlaceholder();
+        }
+      } catch (e) {
+        addBubble(String(e.message || e), 'bot', true);
+      } finally {
+        btn.disabled = false;
+        input.focus();
+      }
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msg = input.value;
+      input.value = '';
+      send(msg);
+    });
+
+    mainMenu.querySelectorAll('[data-area]').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (!currentRole) return;
+        setArea(b.dataset.area);
+      });
+    });
+    subMenu.querySelectorAll('[data-action]').forEach((b) => {
+      b.addEventListener('click', () => runSubAction(b.dataset.action));
+    });
+    loginOverlay.querySelectorAll('[data-role]').forEach((b) => {
+      b.addEventListener('click', () => loginAs(b.dataset.role));
+    });
+  </script>
+</body>
+</html>
